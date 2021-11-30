@@ -509,26 +509,52 @@ module {
     };
 
     public type Interface = actor {
-        axonById           : query  Nat                   -> async AxonPublic;
-        axonStatusById     : shared Nat                   -> async CanisterStatusResult;
-        balanceOf          : query (Nat, ?Principal)      -> async Nat;
-        cancel             : shared (Nat, Nat)            -> async Result.Result<AxonProposal, Error>;
-        cleanup            : shared Nat                   -> async Result.Result<(), Error>;
-        count              : query ()                     -> async Nat;
-        create             : shared Initialization        -> async Result.Result<AxonPublic, Error>;
-        execute            : shared (Nat, Nat)            -> async Result.Result<AxonProposal, Error>;
-        getActiveProposals : query Nat                    -> async ProposalResult;
-        getAllProposals    : query (Nat, ?Nat)            -> async ProposalResult;
-        getNeuronIds       : query Nat                    -> async [Nat64];
-        getNeurons         : query Nat                    -> async NeuronsResult;
-        getProposalById    : query (Nat, Nat)             -> async Result.Result<AxonProposal, Error>;
-        ledger             : query Nat                    -> async [LedgerEntry];
-        myAxons            : query ()                     -> async [AxonPublic];
-        propose            : shared NewProposal           -> async Result.Result<AxonProposal, Error>;
-        sync               : shared Nat                   -> async NeuronsResult;
-        topAxons           : query ()                     -> async [AxonPublic];
-        transfer           : shared (Nat, Principal, Nat) -> async Result.Result<(), Error>;
-        vote               : shared VoteRequest           -> async Result.Result<(), Error>;
-        wallet_receive     : shared ()                    -> async Nat;
-    }
-}
+        // Returns a (public) axon.
+        axonById           : query  (axonId : Nat)                               -> async AxonPublic;
+        // Returns the axon canister status.
+        axonStatusById     : shared (axonId : Nat)                               -> async CanisterStatusResult;
+        // Returns the balance of a principal in the specified axon.
+        balanceOf          : query  (axonId : Nat, ?Principal)                   -> async Nat;
+        // Cancels an active proposal created by the caller.
+        cancel             : shared (axonId : Nat, proposalId : Nat)             -> async Result.Result<AxonProposal, Error>;
+        // Updates a proposal's statuses and moves from active to all if needed.
+        // Called by sync().
+        cleanup            : shared (axonId : Nat)                               -> async Result.Result<(), Error>;
+        // Returns the total amount of axons.
+        count              : query  ()                                           -> async Nat;
+        // Creates a new Axon.
+        create             : shared Initialization                               -> async Result.Result<AxonPublic, Error>;
+        // Queues aproposal for execution.
+        execute            : shared (axonId : Nat, proposalId : Nat)             -> async Result.Result<AxonProposal, Error>;
+        // Returns all active proposals.
+        // If private, only owners can call it.
+        getActiveProposals : query  Nat                                          -> async ProposalResult;
+        // Returns the last 100 proposals, optionally before the specified id.
+        // If private, only owners can call
+        getAllProposals    : query  (axonId : Nat, before: ?Nat)                 -> async ProposalResult;
+        // Returns the axon's neurons.
+        getNeuronIds       : query  (axonId : Nat)                               -> async [Nat64];
+        // Returns all full neurons.
+        // If private, only owners can call it.
+        getNeurons         : query  (axonId : Nat)                               -> async NeuronsResult;
+        // Returns a single proposal.
+        // If private, only owners can call it.
+        getProposalById    : query  (Nat, Nat)                                   -> async Result.Result<AxonProposal, Error>;
+        // Returns the sorted ledger (greater > less).
+        ledger             : query  (axonId : Nat)                               -> async [LedgerEntry];
+        // Returns a all the axons where the caller has balance.
+        myAxons            : query  ()                                           -> async [AxonPublic];
+        // Submits a new Axon proposal.
+        propose            : shared NewProposal                                  -> async Result.Result<AxonProposal, Error>;
+        // Calls list_neurons() and saves the list of neurons that this axon's proxy controls.
+        sync               : shared (axonId : Nat)                               -> async NeuronsResult;
+        // Returns a list of sorted (public) axons based on their total stake.
+        topAxons           : query  ()                                           -> async [AxonPublic];
+        // Transfers tokens.
+        transfer           : shared (axonId : Nat, to : Principal, amount : Nat) -> async Result.Result<(), Error>;
+        // Votes on an active proposal.
+        vote               : shared VoteRequest                                  -> async Result.Result<(), Error>;
+        // Accepts cycles.
+        wallet_receive     : shared ()                                           -> async Nat;
+    };
+};
